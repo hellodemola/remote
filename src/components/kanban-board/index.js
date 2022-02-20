@@ -1,25 +1,18 @@
-import React, { Component } from "react";
+import React, { useState } from "react";
 import "./index.css";
 
-export default class KanbanBoard extends Component {
-  constructor() {
-    super();
+export default function KanbanBoard () {
+
     // Each task is uniquely identified by its name. 
     // Therefore, when you perform any operation on tasks, make sure you pick tasks by names (primary key) instead of any kind of index or any other attribute.
-    this.state = {
-      tasks: [
-            { name: '1', stage: 0 },
-            { name: '2', stage: 0 },
-        ]
-    };
-    this.stagesNames = ['Backlog', 'To Do', 'Ongoing', 'Done'];
-  }
-
-  render() {
-    const { tasks } = this.state;
+  
+  const [tasks, setTasks] = useState([ { name: '1', stage: 0 }, { name: '2', stage: 0 },]);
+  const [newTasks, setNewTasks] = useState();
+  const stagesNames = ['Backlog', 'To Do', 'Ongoing', 'Done'];
+  
 
     let stagesTasks = [];
-    for (let i = 0; i < this.stagesNames.length; ++i) {
+    for (let i = 0; i < stagesNames.length; ++i) {
       stagesTasks.push([]);
     }
     for (let task of tasks) {
@@ -27,11 +20,66 @@ export default class KanbanBoard extends Component {
       stagesTasks[stageId].push(task);
     }
 
+    
+    const handleSubmit = (event) => {
+      event.preventDefault();
+      if (newTasks) {
+        const taskExist = tasks.find(task => task.name === newTasks);
+        console.log(taskExist);
+        if (taskExist) {
+          alert('Task already exist');
+          return;
+        }
+        setTasks([...tasks, { name: newTasks, stage: 0 }]);
+        setNewTasks('');
+        event.target.reset();
+      } else {
+        alert('Please enter a task name');
+      }
+    }
+  
+  const handleForward = (taskName) => {
+    const updateTasks = tasks.map(task => {
+      console.log(task.name, taskName, 'frist')
+      console.log(task.name, 'task.Name')
+      if (task.name === taskName) {
+        if (task.stage < 3) {
+          task.stage = task.stage + 1;
+        }
+      }
+      return task;
+    });
+    setTasks(updateTasks);
+  }
+
+  const handleBackward = (taskName) => {
+    const updateTasks = tasks.map(task => {
+      if (task.name === taskName) {
+        if (task.stage > 0) {
+            task.stage = task.stage - 1;
+        }
+      }
+      return task;
+    });
+    setTasks(updateTasks);
+  }
+
+  const handleDelete = (taskName) => {
+    const updateTasks = tasks.filter(task => task.name !== taskName);
+    setTasks(updateTasks);
+  }
+
+
     return (
       <div className="mt-20 layout-column justify-content-center align-items-center">
         <section className="mt-50 layout-row align-items-center justify-content-center">
-          <input id="create-task-input" type="text" className="large" placeholder="New task name" data-testid="create-task-input"/>
-          <button type="submit" className="ml-30" data-testid="create-task-button">Create task</button>
+          <form onSubmit={handleSubmit}>
+            <input
+              id="create-task-input"
+              onChange={(e) => setNewTasks(e.target.value)}
+              type="text" className="large" placeholder="New task name" data-testid="create-task-input" />
+            <button type="submit" className="ml-30" data-testid="create-task-button">Create task</button>
+          </form>  
         </section>
 
         <div className="mt-50 layout-row">
@@ -39,20 +87,28 @@ export default class KanbanBoard extends Component {
                 return (
                     <div className="card outlined ml-20 mt-0" key={`${i}`}>
                         <div className="card-text">
-                            <h4>{this.stagesNames[i]}</h4>
+                            <h4>{stagesNames[i]}</h4>
                             <ul className="styled mt-50" data-testid={`stage-${i}`}>
                                 {tasks.map((task, index) => {
                                     return <li className="slide-up-fade-in" key={`${i}${index}`}>
                                       <div className="li-content layout-row justify-content-between align-items-center">
                                         <span data-testid={`${task.name.split(' ').join('-')}-name`}>{task.name}</span>
                                         <div className="icons">
-                                          <button className="icon-only x-small mx-2" data-testid={`${task.name.split(' ').join('-')}-back`}>
+                                          <button
+                                            onClick={() => handleBackward(task.name)}
+                                            disabled={task.stage === 0}
+                                            className="icon-only x-small mx-2" data-testid={`${task.name.split(' ').join('-')}-back`}>
                                             <i className="material-icons">arrow_back</i>
                                           </button>
-                                          <button className="icon-only x-small mx-2" data-testid={`${task.name.split(' ').join('-')}-forward`}>
+                                          <button
+                                            onClick={() => handleForward(task.name)}
+                                            disabled={task.stage === 3}
+                                            className="icon-only x-small mx-2" data-testid={`${task.name.split(' ').join('-')}-forward`}>
                                             <i className="material-icons">arrow_forward</i>
                                           </button>
-                                          <button className="icon-only danger x-small mx-2" data-testid={`${task.name.split(' ').join('-')}-delete`}>
+                                          <button
+                                            onClick={() => handleDelete(task.name)}
+                                            className="icon-only danger x-small mx-2" data-testid={`${task.name.split(' ').join('-')}-delete`}>
                                             <i className="material-icons">delete</i>
                                           </button>
                                         </div>
@@ -68,4 +124,3 @@ export default class KanbanBoard extends Component {
       </div>
     );
   }
-}
